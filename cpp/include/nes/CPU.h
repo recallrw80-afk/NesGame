@@ -5,9 +5,9 @@
 #ifndef NES_CPU_H
 #define NES_CPU_H
 #include <basic/types.h>
-#include <nes/Bus.h>
 
-#include "Bus.h"
+// 前向声明
+class Bus;
 
 class CPU {
 private:
@@ -63,6 +63,7 @@ private:
     void ROR(); void RTI(); void RTS(); void SBC(); void SEC();
     void SED(); void SEI(); void STA(); void STX(); void STY();
     void TAX(); void TAY(); void TSX(); void TXA(); void TXS();
+    void TYA();
 
     //未定义操作码
     void XXX();
@@ -81,7 +82,7 @@ public:
     ~CPU() = default;
 
     void connect_bus(Bus* bus_ptr);
-
+    
     void reset();
     void step();
     void nmi();

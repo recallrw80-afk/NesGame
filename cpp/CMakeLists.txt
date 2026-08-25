@@ -2,9 +2,9 @@
 cmake_minimum_required(VERSION 3.12)
 # 定义项目名称、版本、语言
 project(Nes VERSION 1.0.0 DESCRIPTION "Nes" LANGUAGES CXX)
-# 设置 C++ 标准为 17
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)      # 必须支持 C++17
+# 设置 C++ 标准为 20
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)      # 必须支持 C++20
 set(CMAKE_CXX_EXTENSIONS OFF)            # 禁用编译器扩展（使用标准 ISO C++）
 # ============================================================================
 
