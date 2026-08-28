@@ -263,5 +263,13 @@ void CPU::ABX() {
         cycles++;
 }
 
+// Absolute
+void CPU::ABS() {
+    u8 lo  = read_mem(pc++);
+    u8 hi = read_mem(pc++);
+    addr_abs = ((static_cast<u16>(hi) << 8) | lo);
+}
+
+// Indexed Indirect X: ($nn, X)
 
 
