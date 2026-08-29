@@ -1,3 +1,4 @@
 build
 .codegraph
 cmake-build-debug
+/build_debug

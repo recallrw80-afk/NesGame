@@ -152,39 +152,44 @@ const CPU::Instruction CPU::table[256] = {
 
 // 构造函数
 CPU::CPU()
-    : a(0),x(0),y(0),pc(0x0000),sp(0xFD),opcode(0x00)
-    , flag_c(false), flag_z(false), flag_i(false), flag_d(false)
-    , flag_b(false), flag_v(false), flag_n(false)
-    , bus(nullptr)
-    , addr_abs(0x0000), addr_rel(0x0000), fetched(0x00), cycles(0) {
+    : a(0), x(0), y(0), pc(0x0000), sp(0xFD), opcode(0x00)
+      , flag_c(false), flag_z(false), flag_i(false), flag_d(false)
+      , flag_b(false), flag_v(false), flag_n(false)
+      , bus(nullptr)
+      , addr_abs(0x0000), addr_rel(0x0000), fetched(0x00), cycles(0)
+{
 }
 
 //连接
-void CPU::connect_bus(Bus* bus_ptr) {
+void CPU::connect_bus(Bus* bus_ptr)
+{
     bus = bus_ptr;
 }
 
-u32 CPU::get_cycles() const{
+u32 CPU::get_cycles() const
+{
     return cycles;
 }
 
 
 // 内存读
-u8 CPU::read_mem(u16 addr) {
-    if (bus)
-        bus->cpu_read(addr);
-    return 0x00;
+u8 CPU::read_mem(u16 addr)
+{
+    return bus ? bus->cpu_read(addr) : 0x00;
 }
 
 //内存写
-void CPU::write_mem(u16 addr, u8 data) {
+void CPU::write_mem(u16 addr, u8 data)
+{
     if (bus)
         bus->cpu_write(addr, data);
 }
 
 
-u8 CPU::fetch() {
-    if (table[opcode].mode != &CPU::IMP  && table[opcode].mode != &CPU::ACC) {
+u8 CPU::fetch()
+{
+    if (table[opcode].mode != &CPU::IMP && table[opcode].mode != &CPU::ACC)
+    {
         fetched = read_mem(addr_abs);
     }
     return fetched;
@@ -192,18 +197,21 @@ u8 CPU::fetch() {
 
 
 //栈操作
-void CPU::push(u8 value) {
+void CPU::push(u8 value)
+{
     write_mem(0x0100 + sp, value);
     sp--;
 }
 
-u8 CPU::pull() {
+u8 CPU::pull()
+{
     sp++;
     return read_mem(0x0100 + sp);
 }
 
 // 标致位编码
-u8 CPU::get_flags() {
+u8 CPU::get_flags()
+{
     u8 p = 0x00;
     if (flag_c) p |= 0x01;
     if (flag_z) p |= 0x02;
@@ -215,7 +223,8 @@ u8 CPU::get_flags() {
     return p;
 }
 
-void CPU::set_flags(u8 value) {
+void CPU::set_flags(u8 value)
+{
     flag_c = (value & 0x01);
     flag_z = (value & 0x02);
     flag_i = (value & 0x04);
@@ -226,35 +235,41 @@ void CPU::set_flags(u8 value) {
 
 // 寻址模式
 // Implied
-void CPU::IMP() {
+void CPU::IMP()
+{
     fetched = a;
 }
 
 // Immediate
-void CPU::IMM() {
+void CPU::IMM()
+{
     addr_abs = pc++;
 }
 
 // Zero Page
-void CPU::ZP0() {
+void CPU::ZP0()
+{
     addr_abs = read_mem(pc++);
     addr_abs &= 0x00FF;
 }
 
 // Zero Page X
-void CPU::ZPX() {
+void CPU::ZPX()
+{
     addr_abs = read_mem(pc++) + x;
     addr_abs &= 0x00FF;
 }
 
 // Zero Page  Y
-void CPU::ZPY() {
+void CPU::ZPY()
+{
     addr_abs = read_mem(pc++) + y;
     addr_abs &= 0x00FF;
 }
 
 // Absolute X
-void CPU::ABX() {
+void CPU::ABX()
+{
     u8 lo = read_mem(pc++);
     u8 hi = read_mem(pc++);
     addr_abs = ((static_cast<u16>(hi) << 8) | lo) + x;
@@ -263,13 +278,68 @@ void CPU::ABX() {
         cycles++;
 }
 
+// Absolute Y
+void CPU::ABY()
+{
+    u8 lo = read_mem(pc++);
+    u8 hi = read_mem(pc++);
+    addr_abs = ((static_cast<u16>(hi) << 8) | lo) + y;
+    //是否发生跨页（page crossing）
+    if ((addr_abs & 0xFF00) != (static_cast<u16>(hi) << 8))
+        cycles++;
+}
+
 // Absolute
-void CPU::ABS() {
-    u8 lo  = read_mem(pc++);
+void CPU::ABS()
+{
+    u8 lo = read_mem(pc++);
     u8 hi = read_mem(pc++);
     addr_abs = ((static_cast<u16>(hi) << 8) | lo);
 }
 
 // Indexed Indirect X: ($nn, X)
+void CPU::IZX()
+{
+    u8 zp = read_mem(pc++);
+    u8 lo = read_mem((zp + x) & 0xFF);
+    u8 hi = read_mem((zp + x + 1) & 0xFF);
+    addr_abs = (static_cast<u16>(hi) << 8) | lo;
+}
 
+// Indexed Indirect Y: ($nn, Y)
+void CPU::IZY()
+{
+    u8 zp = read_mem(pc++);
+    u8 lo = read_mem(zp & 0xFF);
+    u8 hi = read_mem((zp + 1) & 0xFF);
+    u16 base = (static_cast<u16>(hi) << 8) | lo;
+    addr_abs = base + y;
+    if ((addr_abs & 0xFF00) != (base & 0xFF00)) // 用 base 的页，不是 hi
+        cycles++;
+}
 
+// 累加器
+void CPU::ACC()
+{
+    fetched = a;
+}
+
+void CPU::REL()
+{
+    addr_abs = read_mem(pc++);
+    if (addr_rel & 0x80)
+        addr_rel |= 0xFF00;
+}
+
+void CPU::IND()
+{
+    u8 lo = read_mem(pc++);
+    u8 hi = read_mem(pc++);
+    u16 ptr = (static_cast<u16>(hi) << 8) | lo;
+
+    // 6502 硬件 bug: 当指针低字节 = 0xFF 时，
+    // 高字节从 $xx00 读(回绕)，而不是 $xx+1
+    u8 p_lo = read_mem(ptr);
+    u8 p_hi = read_mem((ptr & 0xFF00) | ((ptr + 1) & 0xFF));
+    addr_abs = (static_cast<u16>(p_hi) << 8) | lo;
+}
