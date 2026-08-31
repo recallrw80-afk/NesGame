@@ -356,9 +356,138 @@ void CPU::IND()
 
 
 // 指令函数
+/*
+ * 其实有个规律就是 函数最后一个字母代表内存的去向
+ */
+// 加载 读内存
 void CPU::LDA()
 {
     a = fetch();
-
+    flag_z = (a == 0); //告诉flag_z LDA 执行后 a 是不是 0
+    flag_n = (a & 0x80);//告诉flag_n LDA 执行后 a 的 最高位是不是 1
 }
+
+void CPU::LDX()
+{
+    x = fetch();
+    flag_z = (x == 0);
+    flag_n = (x & 0x80);
+}
+
+void CPU::LDY()
+{
+    y = fetch();
+    flag_z = (y == 0);
+    flag_n = (y & 0x80);
+}
+
+//存储 写内存
+void CPU::STA()
+{
+    write_mem(addr_abs,a);
+}
+
+void CPU::STX()
+{
+    write_mem(addr_abs,x);
+}
+
+void CPU::STY()
+{
+    write_mem(addr_abs,y);
+}
+
+//传送 不碰内存
+/*
+ * 其实有个规律就是 函数最后一个字母代表内存的去向
+ * 倒数第二个表示 来源
+ * 去向 = 来源
+ * 去向做判断
+ */
+void CPU::TAX()
+{
+    x = a;
+    flag_z = (x == 0);
+    flag_n = (x & 0x80);
+}
+
+void CPU::TAY()
+{
+    y = a;
+    flag_z = (y == 0);
+    flag_n = (y & 0x80);
+}
+
+void CPU::TXA()
+{
+    a = x;
+    flag_z = (a == 0);
+    flag_n = (a & 0x80);
+}
+
+void CPU::TYA()
+{
+    a = y;
+    flag_z = (a == 0);
+    flag_n = (a & 0x80);
+}
+
+void CPU::TSX()
+{
+    x = sp;
+    flag_z = (x == 0);
+    flag_n = (x & 0x80);
+}
+
+// 为什么 TXS 不设标志？
+/*
+ * 因为 SP 是栈指针，它不是一个"数值寄存器"（不像 A/X/Y 那样参与比较），它只是指路的地址。
+ * 6502 规定：往 SP 搬数据时，不碰标志位。这是传送里唯一一条不设标志的。
+*/
+void CPU::TXS()
+{
+    sp = x;
+}
+
+//标志位
+/*
+ * 也有个规律就是:
+ * SE = Set 重置为true
+ * CL = Clear 重置为false
+ */
+void CPU::SEC()
+{
+    flag_c = true;
+}
+
+void CPU::CLC()
+{
+    flag_c = false;
+}
+
+void CPU::SED()
+{
+    flag_d = true;
+}
+
+void CPU::CLD()
+{
+    flag_d = false;
+}
+
+void CPU::SEI()
+{
+    flag_i = true;
+}
+
+void CPU::CLI()
+{
+    flag_i = false;
+}
+
+void CPU::CLV()
+{
+    flag_v = false;
+}
+
 
