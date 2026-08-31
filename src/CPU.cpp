@@ -297,26 +297,35 @@ void CPU::ABS()
     addr_abs = ((static_cast<u16>(hi) << 8) | lo);
 }
 
+// Indexed Indirect Y: ($nn, Y)
+void CPU::IZY()
+{
+    u8 zp = read_mem(pc++);
+    // 读取当前高位的内存地址
+    u8 lo = read_mem(zp & 0xFF);
+    u8 hi = read_mem((zp + 1) & 0xFF);
+    u16 base = (static_cast<u16>(hi) << 8) | lo;
+    // 再去 + Y
+    addr_abs = base + y;
+    if ((addr_abs & 0xFF00) != (base & 0xFF00)) // 用 base 的页，不是 hi
+        cycles++;
+}
+
 // Indexed Indirect X: ($nn, X)
+/*
+ * 两个的区别(比对IZY):
+ * IZY 则是用一个固定的指针的位置,用Y去偏移到某段数据(Y 相当于偏移值)
+ * IZX 一张指针表 挑某个指针 X = 序号
+ */
 void CPU::IZX()
 {
     u8 zp = read_mem(pc++);
+    // 读取 +X 后的高位内存地址数据
     u8 lo = read_mem((zp + x) & 0xFF);
     u8 hi = read_mem((zp + x + 1) & 0xFF);
     addr_abs = (static_cast<u16>(hi) << 8) | lo;
 }
 
-// Indexed Indirect Y: ($nn, Y)
-void CPU::IZY()
-{
-    u8 zp = read_mem(pc++);
-    u8 lo = read_mem(zp & 0xFF);
-    u8 hi = read_mem((zp + 1) & 0xFF);
-    u16 base = (static_cast<u16>(hi) << 8) | lo;
-    addr_abs = base + y;
-    if ((addr_abs & 0xFF00) != (base & 0xFF00)) // 用 base 的页，不是 hi
-        cycles++;
-}
 
 // 累加器
 void CPU::ACC()
@@ -326,7 +335,7 @@ void CPU::ACC()
 
 void CPU::REL()
 {
-    addr_abs = read_mem(pc++);
+    addr_rel = read_mem(pc++);
     if (addr_rel & 0x80)
         addr_rel |= 0xFF00;
 }
@@ -341,5 +350,5 @@ void CPU::IND()
     // 高字节从 $xx00 读(回绕)，而不是 $xx+1
     u8 p_lo = read_mem(ptr);
     u8 p_hi = read_mem((ptr & 0xFF00) | ((ptr + 1) & 0xFF));
-    addr_abs = (static_cast<u16>(p_hi) << 8) | lo;
+    addr_abs = (static_cast<u16>(p_hi) << 8) | p_lo;
 }
