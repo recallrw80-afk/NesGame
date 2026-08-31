@@ -20,13 +20,14 @@ private:
     u8 opcode; // 当前操作码
 
     // 状态标志位(P 寄存器): NV-BDIZC
-    bool flag_c;    // bit0 Carry
-    bool flag_z;    // bit1 Zero
-    bool flag_i;    // bit2 Interrupt Disable
-    bool flag_d;    // bit3 Decimal
-    bool flag_b;    // bit4 Break
-    bool flag_v;    // bit6 OverFlow
-    bool flag_n;    // bit7 Negative
+    bool flag_c;    // bit0 Carry | 含义:进位/借位 | 谁影响它: ADC/SBC、移位；SEC/CLC 设清
+    bool flag_z;    // bit1 Zero | 含义:结果是否为 0 | 谁影响它: 几乎每个运算；BEQ/BNE 测试
+    bool flag_i;    // bit2 Interrupt Disable | 含义:是否屏蔽中断 谁影响它: SEI/CLI 设清
+    bool flag_d;    // bit3 Decimal | 含义:十进制模式    | 谁影响它: SED/CLD 设清
+    bool flag_b;    // bit4 Break | 含义:是不是 BRK 触发 | 谁影响它: BRK 压栈时
+    //bit5 含义:未用，恒 1
+    bool flag_v;    // bit6 OverFlow | 含义:带符号溢出   | 谁影响它: ADC/SBC；BVC/BVS 测试
+    bool flag_n;    // bit7 Negative | 含义:结果最高位=1（负数） | 谁影响它: 几乎每个运算；BPL/BMI 测试
 
     // 总线连接
     Bus* bus;

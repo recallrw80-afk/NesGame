@@ -352,3 +352,13 @@ void CPU::IND()
     u8 p_hi = read_mem((ptr & 0xFF00) | ((ptr + 1) & 0xFF));
     addr_abs = (static_cast<u16>(p_hi) << 8) | p_lo;
 }
+//END 寻址模式 13个
+
+
+// 指令函数
+void CPU::LDA()
+{
+    a = fetch();
+
+}
+
